@@ -3,7 +3,7 @@
 > **Every project begins here.** Genesis reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
 
 ```bash
-npm install -g agent-genesis
+npm install -g genesisx
 cd any-project
 genesis .
 ```
@@ -43,21 +43,104 @@ genesis .
 
 Generated agent: `fastapi-core-engineer.md` (85 lines). Knows the exact FastAPI version (0.136.3), every core module, all import conventions, async patterns, test framework, and deprecation strategy — extracted straight from the source.
 
-### gin (Go, 53 files)
+### gin (Go, 53 files) — 2 bugs found
 
-Found 2 bugs. Generated 5 agents: `gin-core-engineer`, `codec-dev`, `docs-agent`, `examples-maintainer`, `testdata-domain-agent`.
+```
+┌──────────────────────────────────────────────┐
+│   gin · Go · 53 files                        │
+│   DeepSeek V3 · ~$0.002 · 5 domains          │
+└──────────────────────────────────────────────┘
 
-### express (TypeScript / JavaScript, 10 entries)
+┌──────────────────────────────────────────────┐
+│   files                                      │
+│   binding/  render/  internal/  ginS/        │
+│   codec/   docs/   examples/   testdata/     │
+│   2 bugs · 4 untested                        │
+└──────────────────────────────────────────────┘
 
-Found 1 bug. Generated 3 agents: `express-core-engineer`, `express-examples-agent`, `express-test-engineer`.
+┌──────────────────────────────────────────────┐
+│   team                                       │
+│   gin-core-engineer    core modules   54     │
+│   codec-dev            codec/           5    │
+│   docs-agent           docs/            1    │
+│   examples-maintainer  examples/        1    │
+│   testdata-domain-agent testdata/       7    │
+│   reviewer             all · read-only       │
+└──────────────────────────────────────────────┘
+```
 
-### click (Python, 9 entries)
+### express (TypeScript, 10 entries) — 1 bug found
 
-Zero bugs (clean codebase). 4 agents: `core-dev`, `click-documentation-agent`, `click-examples-auditor`, `click-test-engineer`.
+```
+┌──────────────────────────────────────────────┐
+│   express · TypeScript (Express) · 10 files  │
+│   DeepSeek V3 · ~$0.002 · 3 domains          │
+└──────────────────────────────────────────────┘
 
-### got (TypeScript, 9 entries)
+┌──────────────────────────────────────────────┐
+│   files                                      │
+│   lib/   examples/   test/                   │
+│   1 bug · 8 untested                         │
+└──────────────────────────────────────────────┘
 
-Found 3 bugs and 1 hardcoded secret. 5 agents: `got-source-agent`, `got-test-domain-agent`, `documentation-agent`, `media-asset-manager`, `benchmark-agent`.
+┌──────────────────────────────────────────────┐
+│   team                                       │
+│   express-core-engineer  lib/          6     │
+│   express-examples-agent examples/    80     │
+│   express-test-engineer  test/        112     │
+│   reviewer               all · read-only     │
+└──────────────────────────────────────────────┘
+```
+
+### click (Python, 9 entries) — clean codebase
+
+```
+┌──────────────────────────────────────────────┐
+│   click · Python · 9 files                   │
+│   DeepSeek V3 · ~$0.002 · 4 domains          │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   files                                      │
+│   src/   docs/   examples/   tests/          │
+│   0 bugs · 1 untested                        │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   team                                       │
+│   core-dev                 src/        18    │
+│   click-documentation-agent docs/      41    │
+│   click-examples-auditor    examples/  39    │
+│   click-test-engineer       tests/     31    │
+│   reviewer                  all · read-only  │
+└──────────────────────────────────────────────┘
+```
+
+### got (TypeScript, 9 entries) — 3 bugs + 1 secret
+
+```
+┌──────────────────────────────────────────────┐
+│   got · TypeScript (Express) · 9 files       │
+│   DeepSeek V3 · ~$0.002 · 5 domains          │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   files                                      │
+│   source/   test/   documentation/           │
+│   media/   benchmark/                        │
+│   3 bugs · 1 secret · 2 untested             │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   team                                       │
+│   got-source-agent       source/       23    │
+│   got-test-domain-agent  test/         49    │
+│   documentation-agent    documentation/ 26   │
+│   media-asset-manager    media/         4    │
+│   benchmark-agent        benchmark/     2    │
+│   reviewer               all · read-only     │
+└──────────────────────────────────────────────┘
+```
 
 ---
 
@@ -65,7 +148,7 @@ Found 3 bugs and 1 hardcoded secret. 5 agents: `got-source-agent`, `got-test-dom
 
 ```bash
 # 1. Install
-npm install -g genesis
+npm install -g genesisx
 
 # 2. Set your LLM key (any one works)
 export DEEPSEEK_API_KEY=sk-...     # recommended: cheapest, $0.002/run
@@ -74,13 +157,13 @@ export OPENAI_API_KEY=sk-...        # GPT-4o
 
 # 3. Run on any project
 cd any-project
-npx genesis .
+genesis .
 
 # Or skip approval for CI/automation
-npx genesis . --yes
-npx genesis . --provider claude
-npx genesis . --dry-run             # preview without writing
-npx genesis . --json                # machine-readable output
+genesis . --yes
+genesis . --provider claude
+genesis . --dry-run             # preview without writing
+genesis . --json                # machine-readable output
 ```
 
 ---
@@ -151,7 +234,7 @@ Genesis also runs as an MCP server — connect it to OpenCode, Claude Code, or C
   "mcpServers": {
     "genesis": {
       "command": "npx",
-      "args": ["genesis-mcp"]
+      "args": ["genesisx-mcp"]
     }
   }
 }
