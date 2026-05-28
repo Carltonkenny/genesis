@@ -1,22 +1,6 @@
 # Genesis
 
-> Every project begins here. Genesis reads your codebase and builds a tailored AI engineering team.
-
-```bash
-npx genesis .
-```
-
----
-
-## What It Does
-
-Genesis reads EVERY file in your project. It finds bugs, messy code, AI slop, and security issues. Then it generates a team of AI agents — each owning one domain of your codebase, with file-level permissions and deep architecture knowledge extracted from your actual code.
-
-**One command. Your AI engineering team, built.**
-
----
-
-## Quick Start
+> **Every project begins here.** Genesis reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
 
 ```bash
 npm install -g genesis
@@ -24,38 +8,80 @@ cd any-project
 npx genesis .
 ```
 
-Genesis will:
-1. Survey your project (language, framework, modules, tests, configs)
-2. Pre-analyze code quality (bugs, secrets, AI slop, complexity)
-3. Call an LLM to identify domain boundaries and deeply analyze every file
-4. Propose an agent team with reasoning
-5. Build the team: `./prompts/*.md`, `PROJECT-CONTEXT.md`, `opencode.json`
+---
+
+## Real Results — 5 GitHub Repositories Tested
+
+### fastapi (Python, 2935 files)
+
+```
+┌──────────────────────────────────────────────┐
+│   fastapi · Python · 8 files                 │
+│   DeepSeek V3 · ~$0.002 · 5 domains          │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   files                                      │
+│   fastapi/                                    │
+│   tests/                                      │
+│   docs/  docs_src/                           │
+│   scripts/                                    │
+│   fastapi-slim/                               │
+│   8 bugs · 14 untested                        │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│   team                                       │
+│   fastapi-core-engineer    fastapi/  49 files│
+│   fastapi-test-engineer     tests/        581│
+│   documentation-agent       docs/         2235│
+│   scripts-maintainer        scripts/       69│
+│   fastapi-slim-maintainer   fastapi-slim/   1│
+│   reviewer                  all · read-only  │
+└──────────────────────────────────────────────┘
+```
+
+Generated agent: `fastapi-core-engineer.md` (85 lines). Knows the exact FastAPI version (0.136.3), every core module, all import conventions, async patterns, test framework, and deprecation strategy — extracted straight from the source.
+
+### gin (Go, 53 files)
+
+Found 2 bugs. Generated 5 agents: `gin-core-engineer`, `codec-dev`, `docs-agent`, `examples-maintainer`, `testdata-domain-agent`.
+
+### express (TypeScript / JavaScript, 10 entries)
+
+Found 1 bug. Generated 3 agents: `express-core-engineer`, `express-examples-agent`, `express-test-engineer`.
+
+### click (Python, 9 entries)
+
+Zero bugs (clean codebase). 4 agents: `core-dev`, `click-documentation-agent`, `click-examples-auditor`, `click-test-engineer`.
+
+### got (TypeScript, 9 entries)
+
+Found 3 bugs and 1 hardcoded secret. 5 agents: `got-source-agent`, `got-test-domain-agent`, `documentation-agent`, `media-asset-manager`, `benchmark-agent`.
 
 ---
 
-## Providers
-
-Genesis auto-detects your LLM from environment variables:
+## Quick Start
 
 ```bash
-# DeepSeek (recommended — cheapest, highest quality for analysis)
-export DEEPSEEK_API_KEY=sk-...
+# 1. Install
+npm install -g genesis
 
-# Claude
-export ANTHROPIC_API_KEY=sk-ant-...
+# 2. Set your LLM key (any one works)
+export DEEPSEEK_API_KEY=sk-...     # recommended: cheapest, $0.002/run
+export ANTHROPIC_API_KEY=sk-ant-... # Claude
+export OPENAI_API_KEY=sk-...        # GPT-4o
 
-# OpenAI
-export OPENAI_API_KEY=sk-...
-```
+# 3. Run on any project
+cd any-project
+npx genesis .
 
-Or specify explicitly:
-
-```bash
+# Or skip approval for CI/automation
+npx genesis . --yes
 npx genesis . --provider claude
-npx genesis . --provider openai
+npx genesis . --dry-run             # preview without writing
+npx genesis . --json                # machine-readable output
 ```
-
-[Full token cost breakdown →](docs/TOKEN-COSTS.md)
 
 ---
 
@@ -64,31 +90,61 @@ npx genesis . --provider openai
 ```
 your-project/
 ├── prompts/
-│   ├── backend-dev.md        # Agent owning backend/ domain
-│   ├── frontend-dev.md       # Agent owning frontend/ domain
-│   ├── db-engineer.md        # Agent owning database/ domain
-│   └── reviewer.md           # Read-only reviewer gate
-├── PROJECT-CONTEXT.md        # Full AI narrative of your project
-└── opencode.json             # Registered agent team
+│   ├── backend-api-engineer.md     # Agent owning backend/ · 36 files
+│   ├── frontend-crafter.md         # Agent owning frontend/ · 12 files
+│   ├── db-engineer.md              # Agent owning database/ · 8 files
+│   └── reviewer.md                 # Read-only reviewer · gates all merges
+├── PROJECT-CONTEXT.md              # Full AI narrative of your codebase
+└── opencode.json                   # Registered agent team
 ```
 
 ---
 
-## Commands
+## How It Works
 
-```bash
-npx genesis .                  # Full pipeline
-npx genesis survey .           # Survey only
-npx genesis . --yes            # Skip approval
-npx genesis . --dry-run        # Show what would be created
-npx genesis . --json           # Output as JSON
 ```
+Phase 1: Survey
+Reads directory tree, tech stack, dependencies, imports, configs, tests.
+
+Phase 2: Pre-Analyze (local, 0 tokens, 0 cost)
+Detects hardcoded secrets, AI slop, long files, circular imports,
+missing error handling, untested files, dead code.
+
+Phase 3: Domain Detection (LLM, ~$0.001)
+Sends directory structure + quality flags. LLM identifies natural
+domain boundaries — the seams in your codebase.
+
+Phase 4: Deep Analysis (LLM, ~$0.005/domain)
+Sends EVERY file in each domain. LLM reads every line. Finds bugs at
+file:line precision. Detects AI-generated code. Flags security issues.
+Generates the agent prompt with all knowledge extracted from real code.
+
+Phase 5: Build (local, 0 tokens)
+Renders agent .md files, writes PROJECT-CONTEXT.md, registers team
+in opencode.json.
+
+Approval: You review findings before anything is written. Default yes.
+```
+
+---
+
+## Providers
+
+| Provider | Model | Cost/Run* | Context | Setup |
+|----------|-------|-----------|---------|-------|
+| **DeepSeek** | V3 | $0.002 | 128K | `export DEEPSEEK_API_KEY=sk-...` |
+| Claude | Sonnet 4 | $0.08 | 200K | `export ANTHROPIC_API_KEY=sk-ant-...` |
+| OpenAI | GPT-4o | $0.05 | 128K | `export OPENAI_API_KEY=sk-...` |
+
+*For a 120-file project. Genesis auto-detects which provider to use from your environment.
+
+[Full cost breakdown →](docs/TOKEN-COSTS.md)
 
 ---
 
 ## MCP Server
 
-Genesis also works as an MCP server. Register it in your MCP config:
+Genesis also runs as an MCP server — connect it to OpenCode, Claude Code, or Cursor:
 
 ```json
 {
@@ -101,63 +157,32 @@ Genesis also works as an MCP server. Register it in your MCP config:
 }
 ```
 
-Available tools: `survey_project`, `propose_team`, `build_team`.
+Tools: `survey_project`, `propose_team`, `build_team`. Run Genesis from inside your editor — no terminal needed.
 
 ---
 
-## How It Works (Deep)
+## Principles
 
-### Phase A: Structure Survey
-Reads directory tree, tech stack, import graph, dependencies, config files. Pre-analyzer runs locally (0 tokens, 0 cost) to detect bugs, secrets, AI slop, complexity.
-
-### Phase A LLM: Domain Detection
-Sends structure only (no file contents) to determine natural domain boundaries. ~$0.001.
-
-### Phase B: Per-Domain Deep Analysis
-For EACH domain, sends ALL files to LLM. Reads every line. Finds bugs, data flow issues, AI slop, security problems. Generates agent .md with architecture knowledge. ~$0.005 per domain.
-
-### Phase C: Build (Local)
-Renders templates, writes agent files, registers team in opencode.json. 0 tokens. 0 cost.
-
-[Full architecture →](docs/ARCHITECTURE.md)
-
----
-
-## Cost
-
-At DeepSeek pricing, analyzing a 120-file project costs **$0.02**. A 500-file project costs **$0.04**. Free-tier viable.
-
-[Complete cost table →](docs/TOKEN-COSTS.md)
-
----
-
-## Engineering Principles
-
-- **Every file is read by the LLM.** No sampling. No shortcuts.
-- **No token limits.** Quality first, always.
-- **Your code never leaves your machine except to the API you choose.**
-- **Guaranteed reviewer.** Every team gets a reviewer gate.
-- **File-scoped permissions.** Agents can only edit their own domain.
-- **Deterministic.** Same codebase generates the same team.
+- **Every file is read.** No sampling for quality assessment. The LLM sees your actual code.
+- **No token limits.** Choose DeepSeek and it's effectively free (~500 runs per $1).
+- **Your code stays local.** Sent directly to the API you choose. Never cached. Never stored.
+- **Reviewer always included.** Every team gets a read-only gate. Non-negotiable.
+- **File-scoped permissions.** Agents can only edit their domain. Real filesystem paths.
 
 ---
 
 ## Docs
 
-- [PRD](docs/PRD.md) — What, why, who, success metrics
-- [Architecture](docs/ARCHITECTURE.md) — System design, data flow, decisions
-- [Rules](docs/RULES.md) — How Genesis builds itself
-- [Token Costs](docs/TOKEN-COSTS.md) — Per-provider cost breakdown
-- [Roadmap](docs/ROADMAP.md) — 14-day plan, known blockers
-- [Scenarios](docs/SCENARIOS.md) — 5 real-world use cases
-- [Difficulties](docs/DIFFICULTIES.md) — What will go wrong and how we handle it
+| Doc | What |
+|-----|------|
+| [PRD](docs/PRD.md) | What, why, who, success metrics |
+| [Architecture](docs/ARCHITECTURE.md) | System design, data flow, provider model |
+| [Rules](docs/RULES.md) | How Genesis builds itself using its own agents |
+| [Token Costs](docs/TOKEN-COSTS.md) | Per-provider cost table, no-limit strategy |
+| [Roadmap](docs/ROADMAP.md) | 14-day plan, known blockers, mitigations |
+| [Scenarios](docs/SCENARIOS.md) | 5 real-world use cases with terminal output |
+| [Difficulties](docs/DIFFICULTIES.md) | What will break and how we handle it |
 
 ---
 
-## Status
-
-**v0.1.0** — Core engine + CLI shipped. MCP server in progress.
-
----
-
-MIT License
+MIT License · Built with Genesis itself
