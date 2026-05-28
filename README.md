@@ -200,9 +200,10 @@ Sends directory structure + quality flags. LLM identifies natural
 domain boundaries — the seams in your codebase.
 
 Phase 4: Deep Analysis (LLM, ~$0.005/domain)
-Sends EVERY file in each domain. LLM reads every line. Finds bugs at
-file:line precision. Detects AI-generated code. Flags security issues.
-Generates the agent prompt with all knowledge extracted from real code.
+For small/medium domains, sends every file. For large domains, uses weighted sampling
+(imports + bugs + boundary proximity) to fit context while staying high-signal.
+Finds bugs at file:line precision. Detects AI-generated code. Flags security issues.
+Generates the agent prompt with knowledge extracted from real code.
 
 Phase 5: Build (local, 0 tokens)
 Renders agent .md files, writes PROJECT-CONTEXT.md, registers team
@@ -248,7 +249,7 @@ Tools: `survey_project`, `propose_team`, `build_team`. Run Genesis from inside y
 
 ## Principles
 
-- **Every file is read.** No sampling for quality assessment. The LLM sees your actual code.
+- **Every file is scanned locally.** Deep analysis uses weighted sampling for large domains to fit context.
 - **No token limits.** Choose DeepSeek and it's effectively free (~500 runs per $1).
 - **Your code stays local.** Sent directly to the API you choose. Never cached. Never stored.
 - **Reviewer always included.** Every team gets a read-only gate. Non-negotiable.

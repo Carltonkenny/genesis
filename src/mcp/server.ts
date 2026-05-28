@@ -26,7 +26,7 @@ import { registerAgents } from '../core/register.js';
 import { createProvider } from '../llm/factory.js';
 
 const server = new McpServer(
-  { name: 'genesis', version: '0.1.2' },
+  { name: 'genesis', version: '0.2.0' },
   { capabilities: { tools: {} } }
 );
 
@@ -145,7 +145,7 @@ server.tool(
 
 const transport = new StdioServerTransport();
 
-process.stderr.write(`Genesis MCP server v0.1.2 starting...\n`);
+process.stderr.write(`Genesis MCP server v0.2.0 starting...\n`);
 
 await server.connect(transport);
 

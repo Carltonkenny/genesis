@@ -5,8 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "genesis": "./bin/genesis.js",
-    "genesis-mcp": "./bin/genesis-mcp.js"
+    "genesis": "./bin/genesis.cjs",
+    "genesis-mcp": "./bin/genesis-mcp.cjs"
   },
   "scripts": {
     "build": "tsc",

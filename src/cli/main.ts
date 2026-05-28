@@ -29,7 +29,7 @@ const program = new Command();
 program
   .name('genesis')
   .description('Every project begins here. Build your AI engineering team from any codebase.')
-  .version('0.1.0')
+  .version('0.2.0')
   .argument('[directory]', 'Project directory', '.')
   .option('-y, --yes', 'Skip approval prompt')
   .option('-p, --provider <provider>', 'LLM provider (deepseek, claude, openai, auto)', 'auto')
