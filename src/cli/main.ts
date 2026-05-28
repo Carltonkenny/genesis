@@ -19,6 +19,8 @@ import { deepAnalyze } from '../core/deep-analyze.js';
 import { generateAgents, generateReviewer, generateProjectContext } from '../core/generate.js';
 import { registerAgents } from '../core/register.js';
 import { createProvider } from '../llm/factory.js';
+import { loadState, createState, saveState, buildPreviousContext } from '../core/memory.js';
+import { validateAgent } from '../core/validate.js';
 import { displaySurvey, displayApproval, displayBuildResult, spinner, confirm } from './ui.js';
 import type { GenesisOptions, DomainAnalysis, TeamProposal } from '../types.js';
 
@@ -60,6 +62,13 @@ program
       const boundaries = await detectDomains(projectSurvey, quality, provider);
       domainSpinner.succeed(`${boundaries.domains.length} domains identified`);
 
+      // Load project memory from previous runs
+      const state = await loadState(targetDir);
+      const previousContext = buildPreviousContext(state);
+      if (state && state.runCount > 0) {
+        console.log(`  Memory: ${state.runCount} previous run(s). ${state.reviewer.patterns.length} known patterns.`);
+      }
+
       // Phase 5: Deep analysis per domain (Phase B LLM calls)
       const analyses: DomainAnalysis[] = [];
       const allBugs: string[] = [];
@@ -67,7 +76,7 @@ program
 
       for (const domain of boundaries.domains) {
         const deepSpinner = spinner(`Analyzing ${domain.name} (${domain.fileCount} files)...`);
-        const analysis = await deepAnalyze(targetDir, domain, quality, projectSurvey.language, provider);
+        const analysis = await deepAnalyze(targetDir, domain, quality, projectSurvey.language, projectSurvey.importGraph, provider);
         analyses.push(analysis);
 
         for (const bug of analysis.qualityReport.bugs) {
@@ -76,6 +85,12 @@ program
         bugSummary += `${analysis.qualityReport.summary}\n`;
 
         deepSpinner.succeed(`${domain.name}: ${analysis.qualityReport.bugs.length} bugs found`);
+
+        // Validate agent prompt quality
+        const validation = await validateAgent(analysis.promptContent, domain.name, domain.fileCount, provider);
+        if (!validation.passed) {
+          console.log(`    ⚠️  ${domain.name}: validation score ${validation.score}/10 — ${validation.feedback}`);
+        }
       }
 
       // Phase 6: Proposal
@@ -118,6 +133,14 @@ program
       const reviewerPath = await generateReviewer(targetDir, projectSurvey.name, allBugs, bugSummary);
       const contextPath = await generateProjectContext(targetDir, proposal, projectSurvey);
       buildSpinner.succeed('Team built');
+
+      // Save project memory for next run
+      const genesisState = createState(projectSurvey.name, analyses, quality, state);
+      await saveState(targetDir, genesisState);
+      if (genesisState.runCount > 1) {
+        const stillOpen = Object.values(genesisState.domains).flatMap((d) => d.bugs).filter((b) => b.status !== 'FIXED').length;
+        console.log(`  Bug catalog: ${stillOpen} still open. ${genesisState.reviewer.patterns.length} patterns tracked.`);
+      }
 
       if (options.json) {
         console.log(JSON.stringify({ agentPaths, reviewerPath, contextPath, configPath, registrations, status }, null, 2));

@@ -62,7 +62,7 @@ server.tool(
 
     const analyses = [];
     for (const domain of boundaries.domains) {
-      const analysis = await deepAnalyze(directory, domain, quality, projectSurvey.language, llm);
+      const analysis = await deepAnalyze(directory, domain, quality, projectSurvey.language, projectSurvey.importGraph, llm);
       analyses.push({
         agentName: analysis.agentName,
         domain: domain,
@@ -104,7 +104,7 @@ server.tool(
     let bugSummary = '';
 
     for (const domain of boundaries.domains) {
-      const analysis = await deepAnalyze(directory, domain, quality, projectSurvey.language, llm);
+      const analysis = await deepAnalyze(directory, domain, quality, projectSurvey.language, projectSurvey.importGraph, llm);
       analyses.push(analysis);
       for (const bug of analysis.qualityReport.bugs) {
         allBugs.push(`${bug.path}:${bug.line} — ${bug.detail}`);

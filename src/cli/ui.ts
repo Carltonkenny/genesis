@@ -69,6 +69,72 @@ export function displayApproval(
   console.log(boxBot());
   console.log();
 
+  // Dependency graph box
+  if (survey.importGraph.length > 0) {
+    console.log(boxTop());
+    console.log(boxLine('  imports', '1'));
+
+    // Top 10 most imported files
+    const importCounts = new Map<string, number>();
+    for (const edge of survey.importGraph) {
+      importCounts.set(edge.to, (importCounts.get(edge.to) || 0) + 1);
+      importCounts.set(edge.from, (importCounts.get(edge.from) || 0) + 1);
+    }
+    const topImports = [...importCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+
+    for (const [file, count] of topImports) {
+      const bar = '█'.repeat(Math.min(count, 15));
+      const display = file.length > 28 ? '...' + file.slice(-25) : file;
+      const bugs = analyses.flatMap((a) => a.qualityReport.bugs)
+        .filter((b) => b.path === file || file.includes(b.path)).length;
+      const annotation = bugs > 0 ? ` ${chalk.red('B' + bugs)}` : '';
+      console.log(boxLineLeft(`  ${chalk.white(display.padEnd(28))} ${chalk.cyan(bar)} ${count}${annotation}`, 1));
+    }
+
+    if (survey.importGraph.length > 10) {
+      console.log(boxLineLeft(`  ${chalk.gray(`(${survey.importGraph.length} total edges, top ${topImports.length} shown)`)}`, 1));
+    }
+  console.log(boxBot());
+  console.log();
+
+  // Kanban board — all findings organized by type
+  const allBugs = analyses.flatMap((a) => a.qualityReport.bugs);
+  const allSecurity = analyses.flatMap((a) => a.qualityReport.securityIssues);
+  const totalGaps2 = analyses.reduce((s, a) => s + a.qualityReport.testGaps.length, 0);
+
+  if (allBugs.length > 0 || allSecurity.length > 0 || totalGaps2 > 0) {
+    console.log(boxTop());
+    console.log(boxLine('  kanban', '1'));
+    console.log(boxLine(''));
+
+    if (allBugs.length > 0) {
+      console.log(boxLineLeft(`  ${chalk.red('🐛 TO FIX')}  ${allBugs.length} bug${allBugs.length !== 1 ? 's' : ''}`, 1));
+      for (const bug of allBugs.slice(0, 5)) {
+        const loc = bug.line ? `L${bug.line}` : '';
+        console.log(boxLineLeft(`  ${chalk.gray(loc.padEnd(5))} ${bug.detail.substring(0, 36)}`, 3));
+      }
+      if (allBugs.length > 5) console.log(boxLineLeft(`  ${chalk.gray(`... and ${allBugs.length - 5} more`)}`, 3));
+    }
+
+    if (allSecurity.length > 0) {
+      console.log(boxLineLeft(`  ${chalk.yellow('🔒 SECURITY')}  ${allSecurity.length} issue${allSecurity.length !== 1 ? 's' : ''}`, 1));
+      for (const sec of allSecurity.slice(0, 3)) {
+        console.log(boxLineLeft(`  ${sec.detail.substring(0, 38)}`, 3));
+      }
+    }
+
+    const testGaps2 = analyses.flatMap((a) => a.qualityReport.testGaps);
+    if (testGaps2.length > 0) {
+      console.log(boxLineLeft(`  ${chalk.gray('🧪 TEST GAPS')}  ${totalGaps2} untested`, 1));
+    }
+
+    console.log(boxBot());
+    console.log();
+  }
+  }
+
   // Files box — tree with findings
   console.log(boxTop());
     console.log(boxLine('  files', '1'));

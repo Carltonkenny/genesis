@@ -56,7 +56,7 @@ async function main() {
 
   for (const domain of boundaries.domains) {
     console.log(`\n  Analyzing ${domain.name} (${domain.fileCount} files)...`);
-    const analysis = await deepAnalyze(TARGET, domain, quality, s.language, provider);
+    const analysis = await deepAnalyze(TARGET, domain, quality, s.language, s.importGraph, provider);
     console.log(`  Agent: ${analysis.agentName}`);
     console.log(`  Temperature: ${analysis.temperature}`);
     console.log(`  Bugs found: ${analysis.qualityReport.bugs.length}`);

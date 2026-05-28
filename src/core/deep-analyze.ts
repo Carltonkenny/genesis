@@ -1,12 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve, sep } from 'node:path';
-import type { DomainBoundary, DomainAnalysis, QualityReport, PermissionSet } from '../types.js';
+import type { DomainBoundary, DomainAnalysis, QualityReport, PermissionSet, ImportEdge } from '../types.js';
+import { weightedSample } from './sampling.js';
 
 export async function deepAnalyze(
   dir: string,
   domain: DomainBoundary,
   quality: QualityReport,
   language: string,
+  importGraph: Pick<ImportEdge, 'from' | 'to'>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   llm: { chat: (messages: any[], options?: any) => Promise<string> },
   maxRetries = 3
@@ -17,13 +19,13 @@ export async function deepAnalyze(
     return emptyAnalysis(domain);
   }
 
-  // For domains with >30 files, sample 30 and note the rest
+  // Weighted sampling: rank files by import count, bugs, boundary proximity
   const MAX_SAMPLE = 30;
   const sampledFiles = fileContents.length > MAX_SAMPLE
-    ? fileContents.slice(0, MAX_SAMPLE)
+    ? weightedSample(fileContents, importGraph, quality, MAX_SAMPLE)
     : fileContents;
   const truncatedNote = fileContents.length > MAX_SAMPLE
-    ? `\n(Showing ${MAX_SAMPLE} of ${fileContents.length} files. Remaining ${fileContents.length - MAX_SAMPLE} files not shown but included in analysis.)`
+    ? `\n(Weighted sample: ${MAX_SAMPLE}/${fileContents.length} files. Priority: imports + bugs + boundaries.)`
     : '';
 
   // Build the deep analysis prompt with sampled file contents
