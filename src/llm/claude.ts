@@ -1,21 +1,20 @@
-import type { LLMProvider, ChatMessage, ChatOptions } from '../types.js';
+import { createRequire } from 'node:module';
+import type { ChatMessage, ChatOptions } from '../types.js';
+
+const require = createRequire(import.meta.url);
 
 export class ClaudeProvider {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private client: any;
+  private client: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
 
-    // Dynamic import for Anthropic SDK
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Anthropic = require('@anthropic-ai/sdk');
-    this.client = new Anthropic({ apiKey });
+    this.client = new Anthropic.default({ apiKey });
   }
 
   async chat(messages: ChatMessage[], options: ChatOptions = {}): Promise<string> {
-    // Extract system message
     const systemMsg = messages.find((m) => m.role === 'system');
     const userMsgs = messages.filter((m) => m.role !== 'system');
 
