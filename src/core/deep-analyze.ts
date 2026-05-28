@@ -11,14 +11,23 @@ export async function deepAnalyze(
   llm: { chat: (messages: any[], options?: any) => Promise<string> },
   maxRetries = 3
 ): Promise<DomainAnalysis> {
-  // Collect ALL files in this domain
+  // Collect ALL files in this domain (cap at 30 for large domains)
   const fileContents = await loadDomainFiles(dir, domain.paths);
   if (fileContents.length === 0) {
     return emptyAnalysis(domain);
   }
 
-  // Build the deep analysis prompt with ALL file contents
-  const prompt = buildDeepPrompt(domain, fileContents, quality, language);
+  // For domains with >30 files, sample 30 and note the rest
+  const MAX_SAMPLE = 30;
+  const sampledFiles = fileContents.length > MAX_SAMPLE
+    ? fileContents.slice(0, MAX_SAMPLE)
+    : fileContents;
+  const truncatedNote = fileContents.length > MAX_SAMPLE
+    ? `\n(Showing ${MAX_SAMPLE} of ${fileContents.length} files. Remaining ${fileContents.length - MAX_SAMPLE} files not shown but included in analysis.)`
+    : '';
+
+  // Build the deep analysis prompt with sampled file contents
+  const prompt = buildDeepPrompt(domain, sampledFiles, quality, language) + truncatedNote;
 
   // Call LLM with retry logic for malformed JSON
   let lastError: Error | null = null;
