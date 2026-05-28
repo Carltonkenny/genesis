@@ -3,9 +3,9 @@
 > **Every project begins here.** Genesis reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
 
 ```bash
-npm install -g genesis
+npm install -g agent-genesis
 cd any-project
-npx genesis .
+genesis .
 ```
 
 ---
