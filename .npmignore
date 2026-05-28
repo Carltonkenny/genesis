@@ -1,0 +1,11 @@
+src/
+tests/
+docs/
+scripts/
+.env
+*.log
+node_modules/
+.vite/
+vitest.config.ts
+tsconfig.json
+.DS_Store

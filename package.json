@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "genesis": "./bin/genesis.js"
+    "genesis": "./bin/genesis.js",
+    "genesis-mcp": "./bin/genesis-mcp.js"
   },
   "scripts": {
     "build": "tsc",
@@ -37,7 +38,8 @@
     "dotenv": "^17.4.2",
     "handlebars": "^4.7.8",
     "openai": "^4.82.0",
-    "ora": "^8.2.0"
+    "ora": "^8.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
