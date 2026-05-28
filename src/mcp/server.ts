@@ -26,7 +26,7 @@ import { registerAgents } from '../core/register.js';
 import { createProvider } from '../llm/factory.js';
 
 const server = new McpServer(
-  { name: 'genesis', version: '0.1.0' },
+  { name: 'genesis', version: '0.1.2' },
   { capabilities: { tools: {} } }
 );
 
@@ -112,9 +112,6 @@ server.tool(
       bugSummary += `${analysis.qualityReport.summary}\n`;
     }
 
-    const agentPaths = await generateAgents(directory, analyses, projectSurvey.name);
-    const reviewerPath = await generateReviewer(directory, projectSurvey.name, allBugs, bugSummary);
-
     const proposal = {
       agents: analyses.map((a) => ({ name: a.agentName, domainAnalysis: a })),
       narrative: `${projectSurvey.name} is a ${projectSurvey.language} project.`,
@@ -122,8 +119,10 @@ server.tool(
       estimatedTokens: 0,
     };
 
-    const contextPath = await generateProjectContext(directory, proposal, projectSurvey);
     const { configPath, registrations, status } = await registerAgents(directory, analyses, projectSurvey.name);
+    const agentPaths = await generateAgents(directory, analyses, projectSurvey.name);
+    const reviewerPath = await generateReviewer(directory, projectSurvey.name, allBugs, bugSummary);
+    const contextPath = await generateProjectContext(directory, proposal, projectSurvey);
 
     return {
       content: [{
@@ -146,7 +145,7 @@ server.tool(
 
 const transport = new StdioServerTransport();
 
-process.stderr.write(`Genesis MCP server v0.1.0 starting...\n`);
+process.stderr.write(`Genesis MCP server v0.1.2 starting...\n`);
 
 await server.connect(transport);
 

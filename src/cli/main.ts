@@ -103,7 +103,7 @@ program
       if (options.dryRun) {
         console.log('\n--- DRY RUN ---');
         for (const agent of proposal.agents) {
-          console.log(`  ./prompts/${agent.domainAnalysis.agentName}.md`);
+          console.log(`  ./prompts/${sanitizeAgentName(agent.domainAnalysis.agentName)}.md`);
         }
         console.log('  ./prompts/reviewer.md');
         console.log('  ./PROJECT-CONTEXT.md');
@@ -113,10 +113,10 @@ program
       }
 
       const buildSpinner = spinner('Building agent team...');
+      const { configPath, registrations, status } = await registerAgents(targetDir, analyses, projectSurvey.name);
       const agentPaths = await generateAgents(targetDir, analyses, projectSurvey.name);
       const reviewerPath = await generateReviewer(targetDir, projectSurvey.name, allBugs, bugSummary);
       const contextPath = await generateProjectContext(targetDir, proposal, projectSurvey);
-      const { configPath, registrations, status } = await registerAgents(targetDir, analyses, projectSurvey.name);
       buildSpinner.succeed('Team built');
 
       if (options.json) {
@@ -153,6 +153,16 @@ function buildArgs(options: GenesisOptions): string[] {
   if (options.dryRun) args.push('--dry-run');
   if (options.output === 'json') args.push('--json');
   return args;
+}
+
+function sanitizeAgentName(name: string): string {
+  const normalized = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+  return normalized || 'agent';
 }
 
 function generateNarrative(

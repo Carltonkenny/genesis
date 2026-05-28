@@ -2,6 +2,16 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { DomainAnalysis, BuildResult, AgentRegistration } from '../types.js';
 
+function sanitizeAgentName(name: string): string {
+  const normalized = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+  return normalized || 'agent';
+}
+
 interface OpenCodeConfig {
   $schema?: string;
   default_agent?: string;
@@ -44,7 +54,7 @@ export async function registerAgents(
 
   // Register each agent
   for (const analysis of analyses) {
-    let agentName = analysis.agentName;
+    let agentName = sanitizeAgentName(analysis.agentName);
 
     // Avoid overwriting existing agents
     if (config.agent[agentName]) {
@@ -53,10 +63,12 @@ export async function registerAgents(
       agentName = `${agentName}-${suffix}`;
     }
 
+    analysis.agentName = agentName;
+
     config.agent[agentName] = {
-      description: `${analysis.agentName} agent for ${projectName}. Owns ${analysis.domain.fileCount} files in ${analysis.domain.paths.join(', ')}.`,
+      description: `${agentName} agent for ${projectName}. Owns ${analysis.domain.fileCount} files in ${analysis.domain.paths.join(', ')}.`,
       mode: 'subagent',
-      prompt: `{file:./prompts/${analysis.agentName}.md}`,
+      prompt: `{file:./prompts/${agentName}.md}`,
       temperature: analysis.temperature,
       tools: { write: true, edit: true, bash: true, read: true, glob: true, grep: true },
       permission: {
@@ -66,7 +78,7 @@ export async function registerAgents(
 
     registrations.push({
       name: agentName,
-      promptPath: `./prompts/${analysis.agentName}.md`,
+      promptPath: `./prompts/${agentName}.md`,
       permissions: analysis.permissions,
       temperature: analysis.temperature,
     });

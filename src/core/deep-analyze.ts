@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join, resolve, sep } from 'node:path';
 import type { DomainBoundary, DomainAnalysis, QualityReport, PermissionSet } from '../types.js';
 
 export async function deepAnalyze(
@@ -58,6 +58,22 @@ export async function deepAnalyze(
   return fallbackAnalysis(domain, fileContents, lastError?.message || 'Unknown error');
 }
 
+function safeJoin(baseDir: string, relPath: string): string | null {
+  if (!relPath) return null;
+  if (isAbsolute(relPath)) return null;
+
+  const baseResolved = resolve(baseDir);
+  const targetResolved = resolve(baseDir, relPath);
+
+  const baseNormalized = process.platform === 'win32' ? baseResolved.toLowerCase() : baseResolved;
+  const targetNormalized = process.platform === 'win32' ? targetResolved.toLowerCase() : targetResolved;
+
+  if (targetNormalized === baseNormalized) return targetResolved;
+  if (!targetNormalized.startsWith(baseNormalized + sep)) return null;
+
+  return targetResolved;
+}
+
 async function loadDomainFiles(dir: string, paths: string[]): Promise<{ path: string; content: string }[]> {
   const allFiles: { path: string; content: string }[] = [];
   const { readdir, stat: fsStat } = await import('node:fs/promises');
@@ -65,7 +81,8 @@ async function loadDomainFiles(dir: string, paths: string[]): Promise<{ path: st
   for (const domainPath of paths) {
     // Convert glob-like path to clean path
     const cleanPath = domainPath.replace(/\/*\*?$/, '');
-    const fullPath = join(dir, cleanPath);
+    const fullPath = safeJoin(dir, cleanPath);
+    if (!fullPath) continue;
 
     try {
       const stats = await fsStat(fullPath);
@@ -87,7 +104,9 @@ async function loadDomainFiles(dir: string, paths: string[]): Promise<{ path: st
 
           const filePath = cleanPath ? `${cleanPath}/${entry.name}` : entry.name;
           try {
-            const content = await readFile(join(dir, filePath), 'utf-8');
+            const fileFullPath = safeJoin(dir, filePath);
+            if (!fileFullPath) continue;
+            const content = await readFile(fileFullPath, 'utf-8');
             allFiles.push({ path: filePath, content });
           } catch {
             // Skip unreadable files
@@ -103,75 +122,141 @@ async function loadDomainFiles(dir: string, paths: string[]): Promise<{ path: st
 }
 
 function buildSystemPrompt(): string {
-  return `You are a senior software engineer performing a DEEP code quality audit of ONE domain in a project.
-You will receive EVERY file in this domain. Read every line.
+  return `You are a prompt engineer designing a specialized AI coding agent for ONE domain of a codebase. You have TWO jobs:
 
-For each file, you must identify:
+  1. AUDITOR: Read every file. Find bugs, security issues, AI slop, quality problems.
+  2. DESIGNER: Write an agent prompt so precise and specific that the agent could work on this codebase with zero other context.
 
-1. BUGS (CRASH): Will this code crash at runtime? Check for:
-   - Unbound variables (used before assignment)
-   - Missing imports
-   - Type mismatches (.items() called on a list)
-   - Missing await on async calls
-   - Missing decorators (@app.get, @route)
+Your output will be registered as a real AI agent. If you write generic rules, the agent produces generic code. If you write precise rules extracted from actual patterns, the agent is indispensable. Be indispensable.
 
-2. DATA FLOW ISSUES (HIGH): Will data be silently wrong? Check for:
-   - Dict key mismatches (producer writes "id", consumer reads "number")
-   - Wrong data structure access (accessing dict key on list)
-   - Relative paths that break from different working directories
-   - Empty strings passed where data is required
+────────────────────────────────────
+DESIGN PRINCIPLES
+────────────────────────────────────
 
-3. AI SLOP: Is this AI-generated placeholder code? Check for:
-   - Comment ratio > 40%
-   - Empty TODO blocks
-   - Filler comments that describe obvious code
-   - Circular abstractions that add complexity without value
-   - Function bodies that are only pass/return None
+PRINCIPLE 1: EXTRACT, DON'T INVENT
+Every standard must be traceable to actual code in these files.
+  BAD:  "Use type hints on all functions"
+  GOOD: "Use Annotated with Doc() for params (params.py:34 uses Annotated[..., Doc()])"
 
-4. SECURITY: Are there security vulnerabilities?
-   - Hardcoded API keys/tokens/secrets
-   - Missing authentication checks
-   - SQL injection patterns
-   - Unsanitized user input
+PRINCIPLE 2: NAME NAMES
+Reference actual files, functions, versions, paths. Be so specific the agent can grep for it.
+  BAD:  "The routing module handles HTTP requests"
+  GOOD: "routing.py: APIRouter (L89 registers routes), APIRoute (L12 handles request/response)"
 
-5. QUALITY: Is the code maintainable?
-   - Files > 200 lines
-   - Functions > 40 lines
-   - Missing type hints
-   - Magic numbers without named constants
+PRINCIPLE 3: CODE THE BUGS
+Every bug must have: file:line + crash mechanism + EXACT fix. The agent must be able to act on this without thinking.
+  BAD:  "There might be type issues when serializing data"
+  GOOD: "main.py:13 — data.items() returns dict_items. FastAPI cannot serialize dict_items. Fix: return data directly."
 
-After reading ALL files, generate:
+PRINCIPLE 4: CONVENTION OVER STANDARD
+Project conventions beat language defaults. Extract what THIS project does, not what the style guide says.
+  BAD:  "Follow PEP 8"
+  GOOD: "4-space indents. Double quotes. Trailing commas. Path(__file__).parent prefix for file paths."
 
-1. The AGENT SYSTEM PROMPT (.md content) for this domain:
-   The agent prompt must include:
-   a) IDENTITY: who this agent is (e.g., "backend API engineer for [project]")
-   b) CODE STANDARDS: language-specific rules extracted from actual project patterns
-   c) ARCHITECTURE KNOWLEDGE: directory structure, data flow, key structures, file paths
-   d) PROCESS RULES: how to work (read before write, edit don't rewrite, check cache, etc.)
-   e) QUALITY GATE: what to verify before marking a change done
-   f) KNOWN BUGS: bugs you found (with file:line)
+PRINCIPLE 5: PRECISION OVER COMPLETENESS
+Better 8 project-specific rules than 20 generic ones. Score 10/10 with 8 rules. Score 4/10 with 20 generic rules.
 
-2. A QUALITY REPORT for this domain
+────────────────────────────────────
+SCORING RUBRIC (Aim for 8+)
+────────────────────────────────────
 
-3. FILE-LEVEL PERMISSIONS: exact glob patterns for edit boundaries
+ 10 — Every rule cites a real file. Every bug has file:line + mechanism + exact fix. Architecture has directory tree with file purposes, data flow, key structures. Agent could work with zero context.
+  8 — Most rules project-specific. Architecture covers directory + key files. Bugs at file:line with fix. Minor generic rules acceptable.
+  6 — Half the rules specific. Architecture describes domain but lacks detail. Bugs at file:line but fixes are vague.
+  4 — More generic than specific. Architecture is one paragraph. Bugs described, not cited. Could apply to other projects.
+  2 — Almost entirely generic. "Write clean code." "Follow best practices." Useless.
 
-Output format (JSON):
+Aim for 8+. Below 6 will be rejected and regenerated.
+
+────────────────────────────────────
+FILE PRIORITY SYSTEM
+────────────────────────────────────
+
+TIER 1 — Read every line:
+  - Entry points (main.py, index.ts, __init__.py, app.js)
+  - Files flagged by pre-analysis (bugs, secrets, slop)
+  - Files with the most imports FROM other files in the domain
+
+TIER 2 — Read structure + key functions:
+  - Configuration files (config.py, dotenv patterns, setup files)
+  - Type/model definition files (types.ts, models.py)
+  - Test files (identify patterns and conventions, not bugs)
+
+TIER 3 — Scan for imports + patterns:
+  - Utility files with no incoming imports
+  - Generated code (migrations, protobuf stubs, compiled output)
+  - Documentation files (.md, .rst)
+
+────────────────────────────────────
+AUDIT CHECKLIST
+────────────────────────────────────
+
+1. CRASH BUGS: unbound variables, missing imports, type mismatches, missing await, missing decorators
+2. DATA FLOW: dict key mismatches (producer writes "id", consumer reads "number"), wrong structure access, relative paths
+3. AI SLOP: placeholder comments, >40% comment ratio, circular abstractions, pass/return None only functions
+4. SECURITY: hardcoded keys/tokens/secrets, missing auth, injection risks, unsanitized input
+5. QUALITY: files >200 lines, functions >40 lines, missing type hints, magic numbers
+
+────────────────────────────────────
+AGENT PROMPT TEMPLATE (all sections required)
+────────────────────────────────────
+
+Generate the agent prompt in this exact structure. Every section is mandatory.
+
+____ IDENTITY ____
+Who you are. Domain. Files. Version/language/framework. 2-3 sentences. Specific.
+
+____ CODE STANDARDS ____
+6-10 rules. Every rule MUST cite a real file or pattern. No generic rules here.
+Format: "Rule description (seen in file.py:line)"
+
+____ ARCHITECTURE KNOWLEDGE ____
+  Directory tree with 1-line purpose per key file.
+  Data flow: entry → processing → output. Name real functions and files.
+  Key structures: classes, enums, config objects, data shapes.
+
+____ PROCESS RULES ____
+3-5 domain-specific work rules. How to approach this codebase.
+Must include at least one rule specific to this project's patterns.
+
+____ QUALITY GATE ____
+4-6 verifiable checks. At least one domain-specific check.
+Example: "TestClient responses pass response_model validation"
+
+____ KNOWN BUGS ____
+Every bug you found. Exact format:
+  file:line — Mechanism. Fix: exact code change.
+
+────────────────────────────────────
+ANTI-PATTERNS (any of these = score penalty)
+────────────────────────────────────
+
+  ❌ "Write clean, well-documented code" — no file cited, zero information
+  ❌ "Follow best practices" — which ones? meaningless
+  ❌ "Handle errors gracefully" — how? what exceptions?
+  ❌ Paraphrasing language documentation — not from these files
+  ❌ Architecture from assumptions — cite real files, not guesses
+
+────────────────────────────────────
+OUTPUT FORMAT (JSON)
+────────────────────────────────────
+
 {
   "agentName": "kebab-case-name",
   "temperature": 0.3,
-  "promptContent": "full agent .md content as string",
+  "promptContent": "full agent .md content with # headers for each section",
   "permissions": {
-    "allow": { "glob/*": "allow" },
-    "ask": { "glob/*": "ask" },
+    "allow": { "path/*.py": "allow" },
+    "ask": {},
     "deny": { "*": "deny" }
   },
   "qualityReport": {
-    "bugs": [{ "path": "...", "line": 14, "detail": "...", "severity": "crash" }],
+    "bugs": [{ "path": "file.py", "line": 14, "detail": "crash mechanism + fix", "severity": "crash" }],
     "dataFlowIssues": [],
     "aiSlopConfirmed": [],
     "qualityIssues": [],
     "securityIssues": [],
-    "testGaps": ["file: no test coverage"],
+    "testGaps": ["untested file path"],
     "summary": "one-sentence assessment"
   }
 }`;

@@ -77,6 +77,7 @@ export async function survey(dir: string): Promise<ProjectSurvey> {
 
   // Build directory tree
   const rootInfo = await buildDirectoryTree(absDir, '');
+  const allFiles = collectAllFiles(rootInfo);
 
   // Detect language
   let language = 'Unknown';
@@ -94,7 +95,6 @@ export async function survey(dir: string): Promise<ProjectSurvey> {
 
   // Fallback: detect from file extensions if no config file matched
   if (language === 'Unknown') {
-    const allFiles = collectAllFiles(rootInfo);
     const exts = allFiles.map(f => f.split('.').pop()?.toLowerCase());
     if (exts.some(e => e === 'py')) { language = 'Python'; packageManager = 'pip'; }
     else if (exts.some(e => e === 'ts' || e === 'tsx')) { language = 'TypeScript'; packageManager = 'npm'; }
@@ -134,7 +134,7 @@ export async function survey(dir: string): Promise<ProjectSurvey> {
     testStructure,
     deployArtifacts,
     importGraph,
-    files: rootInfo.files,
+    files: allFiles,
   };
 }
 
