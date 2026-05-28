@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+coverage/
+.vite/
+tests/fixtures/*/prompts/
+tests/fixtures/*/opencode.json
+tests/fixtures/*/PROJECT-CONTEXT.md

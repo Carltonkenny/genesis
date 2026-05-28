@@ -1,0 +1,18 @@
+---
+description: {{description}}
+mode: subagent
+tools:
+  write: true
+  edit: true
+  bash: true
+  read: true
+  glob: true
+  grep: true
+permission:
+  edit:
+{{#each permissions}}
+    "{{@key}}": "{{this}}"
+{{/each}}
+---
+
+{{promptContent}}
