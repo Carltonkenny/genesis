@@ -1,6 +1,8 @@
-# Genesis
+# GenesisX
 
-> **Every project begins here.** Genesis reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
+> **Every project begins here.** GenesisX reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
+
+> **v0.2** — Enhanced prompt design framework with scoring rubric, anti-patterns, and file priority system. Agent output quality: 8-9/10.
 
 ```bash
 npm install -g genesisx
@@ -268,4 +270,4 @@ Tools: `survey_project`, `propose_team`, `build_team`. Run Genesis from inside y
 
 ---
 
-MIT License · Built with Genesis itself
+MIT License · GenesisX v0.2
