@@ -2,7 +2,7 @@
 
 > **Every project begins here.** GenesisX reads your entire codebase and builds a tailored team of AI agents — each owning one domain, carrying real architecture knowledge, and scoped with file-level permissions.
 
-> **v0.2** — Enhanced prompt design framework with scoring rubric, anti-patterns, and file priority system. Agent output quality: 8-9/10.
+> **v0.2** — Weighted sampling, persistent memory (.genesis/state.json), dependency graph, kanban board, agent validation. 6 hardening features shipped. Agent output quality: 8-9/10.
 
 ```bash
 npm install -g genesisx

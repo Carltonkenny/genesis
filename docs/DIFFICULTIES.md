@@ -1,6 +1,8 @@
 # Known Difficulties & Mitigations
 
-> Generated during planning. Updated during development. This document exists so the coding agent knows what WILL go wrong before it does.
+> **v0.2 Update**: Most architectural risks (LLM parsing, context overflow, API flakiness) are mitigated. The weighted sampling + sample cap resolved timeout issues. Memory state file handles the "re-run from zero" problem. Brace corruption during development was the biggest actual pain point — resolved with git restore + clean re-application.
+
+## Resolved (v0.2)
 
 ## Architecture-Level Difficulties
 

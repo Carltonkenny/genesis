@@ -19,11 +19,26 @@ USER ──▶ CLI (main.ts) ──▶ Survey (survey.ts) ──▶ Pre-Analyzer
                 │                               │
                 │        For each domain:        │
                 │                    ┌──────────▼──────────┐
+                │                    │  WEIGHTED SAMPLING   │
+                │                    │  (sampling.ts)       │
+                │                    │  Rank files by       │
+                │                    │  import × bug ×      │
+                │                    │  boundary proximity  │
+                │                    └──────────┬──────────┘
+                │                               │
+                │                    ┌──────────▼──────────┐
                 │                    │  PHASE B LLM CALL    │
                 │                    │  (deep-analyze.ts)   │
                 │                    │  ALL files in domain │
                 │                    │  Output: agent.md    │
                 │                    │  + quality notes     │
+                │                    └──────────┬──────────┘
+                │                               │
+                │                    ┌──────────▼──────────┐
+                │                    │  VALIDATION           │
+                │                    │  (validate.ts)        │
+                │                    │  Score agent 0-10     │
+                │                    │  Warn if < 6          │
                 │                    └──────────┬──────────┘
                 │                               │
                 │                    ┌──────────▼──────────┐
@@ -34,8 +49,8 @@ USER ──▶ CLI (main.ts) ──▶ Survey (survey.ts) ──▶ Pre-Analyzer
                 │                    │  .md files           │
                 │                    │  register.ts:        │
                 │                    │  opencode.json       │
-                │                    │  context.ts:         │
-                │                    │  PROJECT-CONTEXT.md  │
+                │                    │  memory.ts: writes   │
+                │                    │  .genesis/state.json │
                 │                    └──────────┬──────────┘
                 │                               │
                 ◀───────────────  Team built ───┘
