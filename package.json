@@ -1,6 +1,6 @@
 {
   "name": "genesisx",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Every project begins here. Genesis reads your codebase and builds a tailored AI engineering team.",
   "type": "module",
   "main": "dist/index.js",
