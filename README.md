@@ -234,7 +234,7 @@ Genesis also runs as an MCP server — connect it to OpenCode, Claude Code, or C
   "mcpServers": {
     "genesis": {
       "command": "npx",
-      "args": ["genesisx-mcp"]
+      "args": ["genesis-mcp"]
     }
   }
 }
